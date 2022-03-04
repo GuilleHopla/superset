@@ -22,30 +22,31 @@ x-superset-volumes: &superset-volumes
   # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker:/app/docker
   - superset_home:/app/superset_home
-  - ./pipconfig:/app/pipconfig
 
 version: "3.7"
 services:
   redis:
     image: redis:latest
-    container_name: superset_cache
+    container_name: demo_superset_cache
     restart: unless-stopped
     volumes:
       - redis:/data
 
   db:
-    env_file: docker/.env-non-dev
     image: postgres:10
-    container_name: superset_db
+    container_name: demo_superset_db
+    env_file: docker/.env-demo
     restart: unless-stopped
     volumes:
       - db_home:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
 
   superset:
-    env_file: docker/.env-non-dev
     image: *superset-image
-    container_name: superset_app
+    container_name: demo_superset_app
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
+    env_file: docker/.env-demo
     user: "root"
     restart: unless-stopped
     ports:
@@ -55,18 +56,18 @@ services:
 
   superset-init:
     image: *superset-image
-    container_name: superset_init
+    container_name: demo_superset_init
     command: ["/app/docker/docker-init.sh"]
-    env_file: docker/.env-non-dev
+    env_file: docker/.env-demo
     depends_on: *superset-depends-on
     user: "root"
     volumes: *superset-volumes
 
   superset-worker:
     image: *superset-image
-    container_name: superset_worker
+    container_name: demo_superset_worker
     command: ["/app/docker/docker-bootstrap.sh", "worker"]
-    env_file: docker/.env-non-dev
+    env_file: docker/.env-demo
     restart: unless-stopped
     depends_on: *superset-depends-on
     user: "root"
@@ -74,9 +75,9 @@ services:
 
   superset-worker-beat:
     image: *superset-image
-    container_name: superset_worker_beat
+    container_name: demo_superset_worker_beat
     command: ["/app/docker/docker-bootstrap.sh", "beat"]
-    env_file: docker/.env-non-dev
+    env_file: docker/.env-demo
     restart: unless-stopped
     depends_on: *superset-depends-on
     user: "root"
